@@ -1,9 +1,10 @@
 ﻿using AvivaPayments.Application.Interfaces;
 using AvivaPayments.Application.Services;
-using AvivaPayments.Infrastructure.Interfaces;
 using AvivaPayments.Infrastructure.Persistence;
 using AvivaPayments.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
+using AvivaPayments.Infrastructure.PaymentProviders;
+
 
 var builder = WebApplication.CreateBuilder ( args );
 
@@ -18,8 +19,17 @@ builder.Services.AddDbContext<PaymentsDbContext> ( options =>
     options.UseSqlite ( cs );
 } );
 
+// Application
 builder.Services.AddScoped<IOrderService , OrderService> ( );
+builder.Services.AddScoped<IPaymentProviderSelector , PaymentProviderSelector> ( );
+
+// Repos
 builder.Services.AddScoped<IOrderRepository , OrderRepository> ( );
+
+// Payment providers concretos
+builder.Services.AddScoped<IPaymentProvider , PagaFacilPaymentProvider> ( );
+builder.Services.AddScoped<IPaymentProvider , CazaPagosPaymentProvider> ( );
+
 
 var app = builder.Build ( );
 

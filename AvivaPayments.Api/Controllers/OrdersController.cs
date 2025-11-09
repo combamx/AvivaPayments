@@ -1,6 +1,5 @@
 ﻿using AvivaPayments.Application.Dtos;
 using AvivaPayments.Application.Services;
-using AvivaPayments.Infrastructure.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AvivaPayments.Api.Controllers;
@@ -36,5 +35,21 @@ public class OrdersController : ControllerBase
         var result = await _orderService.GetOrderByIdAsync ( id );
         if (result is null) return NotFound ( );
         return Ok ( result );
+    }
+
+    [HttpPost ( "{id:guid}/cancel" )]
+    public async Task<IActionResult> Cancel ( Guid id )
+    {
+        var ok = await _orderService.CancelOrderAsync ( id );
+        if (!ok) return NotFound ( );
+        return NoContent ( );
+    }
+
+    [HttpPost ( "{id:guid}/pay" )]
+    public async Task<IActionResult> Pay ( Guid id )
+    {
+        var ok = await _orderService.PayOrderAsync ( id );
+        if (!ok) return NotFound ( );
+        return NoContent ( );
     }
 }

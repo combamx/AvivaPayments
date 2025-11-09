@@ -1,17 +1,23 @@
 ﻿using AvivaPayments.Application.Dtos;
 using AvivaPayments.Application.Interfaces;
 using AvivaPayments.Domain.Entities;
-using AvivaPayments.Infrastructure.Interfaces;
 
 namespace AvivaPayments.Application.Services;
 
 public class OrderService : IOrderService
 {
     private readonly IOrderRepository _orderRepository;
+    private readonly IPaymentProviderSelector _paymentProviderSelector;
+    private readonly IEnumerable<IPaymentProvider> _paymentProviders;
 
-    public OrderService ( IOrderRepository orderRepository )
+    public OrderService (
+        IOrderRepository orderRepository ,
+        IPaymentProviderSelector paymentProviderSelector ,
+        IEnumerable<IPaymentProvider> paymentProviders )
     {
         _orderRepository = orderRepository;
+        _paymentProviderSelector = paymentProviderSelector;
+        _paymentProviders = paymentProviders;
     }
 
     public async Task<OrderResponse> CreateOrderAsync ( CreateOrderRequest request , CancellationToken cancellationToken = default )
@@ -19,12 +25,9 @@ public class OrderService : IOrderService
         if (request.Items == null || request.Items.Count == 0)
             throw new ArgumentException ( "La orden debe tener al menos un item" );
 
-        // Mapear DTO → Entidad
         var order = new Order
         {
             PaymentMode = request.PaymentMode ,
-            // ProviderName lo rellenaremos cuando integremos el selector
-            ProviderName = string.Empty ,
         };
 
         decimal total = 0m;
@@ -49,10 +52,17 @@ public class OrderService : IOrderService
 
         order.TotalAmount = total;
 
-        // Guardar
+        // elegir proveedor
+        var (provider, fee) = _paymentProviderSelector.SelectBestProvider ( order.TotalAmount , order.PaymentMode );
+
+        var remoteResult = await provider.CreateRemoteOrderAsync ( order.TotalAmount , order.PaymentMode , cancellationToken );
+
+        order.ProviderName = provider.Name;
+        order.ProviderOrderId = remoteResult.ProviderOrderId;
+        order.ProviderFee = fee;
+
         order = await _orderRepository.AddAsync ( order , cancellationToken );
 
-        // Mapear a respuesta
         return MapToResponse ( order );
     }
 
@@ -69,6 +79,50 @@ public class OrderService : IOrderService
         return MapToResponse ( order );
     }
 
+    public async Task<bool> CancelOrderAsync ( Guid id , CancellationToken cancellationToken = default )
+    {
+        var order = await _orderRepository.GetByIdAsync ( id , cancellationToken );
+        if (order is null) return false;
+
+        if (order.Status == OrderStatus.Cancelled)
+            return true;
+
+        var provider = _paymentProviders.FirstOrDefault ( p => p.Name == order.ProviderName );
+        if (provider is null)
+            throw new InvalidOperationException ( $"No se encontró el proveedor {order.ProviderName}" );
+
+        if (!string.IsNullOrWhiteSpace ( order.ProviderOrderId ))
+        {
+            await provider.CancelRemoteOrderAsync ( order.ProviderOrderId , cancellationToken );
+        }
+
+        order.Status = OrderStatus.Cancelled;
+        await _orderRepository.UpdateAsync ( order , cancellationToken );
+        return true;
+    }
+
+    public async Task<bool> PayOrderAsync ( Guid id , CancellationToken cancellationToken = default )
+    {
+        var order = await _orderRepository.GetByIdAsync ( id , cancellationToken );
+        if (order is null) return false;
+
+        if (order.Status == OrderStatus.Paid)
+            return true;
+
+        var provider = _paymentProviders.FirstOrDefault ( p => p.Name == order.ProviderName );
+        if (provider is null)
+            throw new InvalidOperationException ( $"No se encontró el proveedor {order.ProviderName}" );
+
+        if (!string.IsNullOrWhiteSpace ( order.ProviderOrderId ))
+        {
+            await provider.PayRemoteOrderAsync ( order.ProviderOrderId , cancellationToken );
+        }
+
+        order.Status = OrderStatus.Paid;
+        await _orderRepository.UpdateAsync ( order , cancellationToken );
+        return true;
+    }
+
     private static OrderResponse MapToResponse ( Order order )
     {
         return new OrderResponse
@@ -79,6 +133,7 @@ public class OrderService : IOrderService
             PaymentMode = order.PaymentMode ,
             ProviderName = order.ProviderName ,
             ProviderOrderId = order.ProviderOrderId ,
+            ProviderFee = order.ProviderFee ,
             Status = order.Status ,
             Items = order.Items.Select ( x => new OrderItemResponse
             {
