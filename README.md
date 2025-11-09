@@ -94,6 +94,3 @@ ________________________________________
 •	Propagación: si cancelas en tu API, también debes cancelar en el proveedor que se usó originalmente. Por eso es clave guardar ProviderName y RemoteOrderId. 
 •	Extensibilidad: te advierten que los proveedores pueden cambiar y que debería ser “mínimo o nulo” el cambio en el core → usa interfaces y DI. 
 •	Payloads de ejemplo: los del PDF son orientativos; puedes cambiarlos. O sea, puedes modelar mejor tu DTO. 
-________________________________________
-Si quieres, en el siguiente paso te escribo la estructura de proyectos y las interfaces en C# tal cual las usarías en ASP.NET Core para que te lo lleves y pegues.
-
