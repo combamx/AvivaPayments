@@ -362,7 +362,7 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /AvivaPayments.Api/appsettings.json
-/AvivaPayments.Api/appsettings.json
 /AvivaPayments.Api/appsettings.Development.json
-/AvivaPayments.Api/appsettings.json
-/AvivaPayments.Api/appsettings.Development.json
+
+appsettings.json
+appsettings.Development.json
