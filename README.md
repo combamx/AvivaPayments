@@ -43,7 +43,7 @@ Mini API para gestionar **órdenes de pago** y enviarlas al **proveedor más bar
 Ambos requieren header:
 
 ```http
-x-api-key: apikey-1cnmoisyhkif4s
+x-api-key: apikey-1cnmoisyh*****
 
 
 
