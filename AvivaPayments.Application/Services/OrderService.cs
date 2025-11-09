@@ -53,6 +53,11 @@ public class OrderService : IOrderService
         order.TotalAmount = total;
 
         // elegir proveedor
+        // IEnumerable<IPaymentProvider> _paymentProviders lisdado de proveedores
+        // Aqui se crean los servicios de los proveedores
+        // builder.Services.AddScoped<IPaymentProvider , PagaFacilPaymentProvider> ( );
+        // builder.Services.AddScoped<IPaymentProvider , CazaPagosPaymentProvider> ( );
+
         var (provider, fee) = _paymentProviderSelector.SelectBestProvider ( order.TotalAmount , order.PaymentMode );
 
         var remoteResult = await provider.CreateRemoteOrderAsync ( order.TotalAmount , order.PaymentMode, order.Items, cancellationToken );
