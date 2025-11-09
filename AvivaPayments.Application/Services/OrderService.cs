@@ -55,7 +55,7 @@ public class OrderService : IOrderService
         // elegir proveedor
         var (provider, fee) = _paymentProviderSelector.SelectBestProvider ( order.TotalAmount , order.PaymentMode );
 
-        var remoteResult = await provider.CreateRemoteOrderAsync ( order.TotalAmount , order.PaymentMode , cancellationToken );
+        var remoteResult = await provider.CreateRemoteOrderAsync ( order.TotalAmount , order.PaymentMode, order.Items, cancellationToken );
 
         order.ProviderName = provider.Name;
         order.ProviderOrderId = remoteResult.ProviderOrderId;

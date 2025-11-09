@@ -30,6 +30,10 @@ builder.Services.AddScoped<IOrderRepository , OrderRepository> ( );
 builder.Services.AddScoped<IPaymentProvider , PagaFacilPaymentProvider> ( );
 builder.Services.AddScoped<IPaymentProvider , CazaPagosPaymentProvider> ( );
 
+//Esto hace que los providers de infraestructura puedan recibir un HttpClient listo para usar.
+builder.Services.AddHttpClient<PagaFacilPaymentProvider> ( );
+builder.Services.AddHttpClient<CazaPagosPaymentProvider> ( );
+
 
 var app = builder.Build ( );
 
