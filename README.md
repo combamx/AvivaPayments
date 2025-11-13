@@ -45,5 +45,16 @@ Ambos requieren header:
 ```http
 x-api-key: apikey-1cnmoisyh*****
 
+```
+
+---
+
+## Docker
+
+```
+docker build -t aviva-api -f AvivaPayments.Api/Dockerfile .
+docker run --rm -p 8080:8080 -e ConnectionStrings__DefaultConnection="Data Source=/app/data/payments.db" -e PaymentProviders__PagaFacil__BaseUrl="https://app-paga-chg-aviva.azurewebsites.net" -e PaymentProviders__PagaFacil__ApiKey="apikey-1cnmoisyhkif4s" -e PaymentProviders__CazaPagos__BaseUrl="https://app-caza-chg-aviva.azurewebsites.net" -e PaymentProviders__CazaPagos__ApiKey="apikey-1cnmoisyhkif4s" -v ${PWD}/data:/app/data aviva-api
+
+```
 
 
