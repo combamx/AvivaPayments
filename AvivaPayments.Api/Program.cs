@@ -34,6 +34,12 @@ builder.Services.AddScoped<IPaymentProvider , CazaPagosPaymentProvider> ( );
 builder.Services.AddHttpClient<PagaFacilPaymentProvider> ( );
 builder.Services.AddHttpClient<CazaPagosPaymentProvider> ( );
 
+// Program.cs
+var cors = "_aviva";
+builder.Services.AddCors ( o =>
+    o.AddPolicy ( cors , p => p.WithOrigins ( "http://localhost:5173" ).AllowAnyHeader ( ).AllowAnyMethod ( ) )
+);
+
 
 var app = builder.Build ( );
 
@@ -49,6 +55,8 @@ if (app.Environment.IsDevelopment ( ))
     app.UseSwagger ( );
     app.UseSwaggerUI ( );
 }
+
+app.UseCors ( cors );
 
 app.UseHttpsRedirection ( );
 app.UseAuthorization ( );
