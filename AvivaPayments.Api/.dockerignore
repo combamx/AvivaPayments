@@ -1,0 +1,9 @@
+﻿**/bin/
+**/obj/
+**/.vs/
+**/*.user
+**/*.suo
+*.db
+.env
+AvivaPayments.Api/appsettings.json
+AvivaPayments.Api/appsettings.Development.json
