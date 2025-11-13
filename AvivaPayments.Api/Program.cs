@@ -1,17 +1,23 @@
 ﻿using AvivaPayments.Application.Interfaces;
 using AvivaPayments.Application.Services;
+using AvivaPayments.Infrastructure.PaymentProviders;
 using AvivaPayments.Infrastructure.Persistence;
 using AvivaPayments.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
-using AvivaPayments.Infrastructure.PaymentProviders;
-
 
 var builder = WebApplication.CreateBuilder ( args );
+
+// Config
+builder.Configuration
+    .AddJsonFile ( "appsettings.json" , optional: false , reloadOnChange: true )
+    .AddJsonFile ( $"appsettings.{builder.Environment.EnvironmentName}.json" , optional: true , reloadOnChange: true )
+    .AddEnvironmentVariables ( );
 
 builder.Services.AddControllers ( );
 builder.Services.AddEndpointsApiExplorer ( );
 builder.Services.AddSwaggerGen ( );
 
+// DB
 builder.Services.AddDbContext<PaymentsDbContext> ( options =>
 {
     var cs = builder.Configuration.GetConnectionString ( "DefaultConnection" )
@@ -26,24 +32,21 @@ builder.Services.AddScoped<IPaymentProviderSelector , PaymentProviderSelector> (
 // Repos
 builder.Services.AddScoped<IOrderRepository , OrderRepository> ( );
 
-// Payment providers concretos
+// Providers
 builder.Services.AddScoped<IPaymentProvider , PagaFacilPaymentProvider> ( );
 builder.Services.AddScoped<IPaymentProvider , CazaPagosPaymentProvider> ( );
-
-//Esto hace que los providers de infraestructura puedan recibir un HttpClient listo para usar.
 builder.Services.AddHttpClient<PagaFacilPaymentProvider> ( );
 builder.Services.AddHttpClient<CazaPagosPaymentProvider> ( );
 
-// Program.cs
+// CORS
 var cors = "_aviva";
 builder.Services.AddCors ( o =>
     o.AddPolicy ( cors , p => p.WithOrigins ( "http://localhost:5173" ).AllowAnyHeader ( ).AllowAnyMethod ( ) )
 );
 
-
 var app = builder.Build ( );
 
-// crea la DB y las tablas si no existen
+// DB init
 using (var scope = app.Services.CreateScope ( ))
 {
     var db = scope.ServiceProvider.GetRequiredService<PaymentsDbContext> ( );
@@ -57,7 +60,6 @@ if (app.Environment.IsDevelopment ( ))
 }
 
 app.UseCors ( cors );
-
 app.UseHttpsRedirection ( );
 app.UseAuthorization ( );
 app.MapControllers ( );
